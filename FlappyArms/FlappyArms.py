@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import random
 from sys import exit
+import os
 
 # Initialization
 pygame.init()
@@ -12,8 +13,9 @@ pygame.display.set_caption("FlappyArms")
 
 # Screen capture init
 cap = cv2.VideoCapture(0)
-face_cascade = cv2.CascadeClassifier(
-    cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+cascade_path = os.path.join(os.path.dirname(
+    __file__), "haarcascade_frontalface_default.xml")
+face_cascade = cv2.CascadeClassifier(cascade_path)
 if not cap.isOpened():
     print("Error: Could not open camera")
     exit()
@@ -82,7 +84,7 @@ class Bird(pygame.sprite.Sprite):
 
             if face_pos is not None and self.alive:
                 (x, y, w, h) = face_pos
-                print(h)
+                # print(h)
                 center_y_pos = y + 110
                 if self.prev_center_y_pos is not None:
                     delta = center_y_pos - self.prev_center_y_pos
@@ -94,7 +96,7 @@ class Bird(pygame.sprite.Sprite):
                 self.rect.center = (100, center_y_pos)
 
                 # Warnings for face distance
-                if h > 160:
+                if h > 110:
                     warning_surface = font.render(
                         "Move farther", True, (0, 0, 0))
                     warning_rect = warning_surface.get_rect(
@@ -177,6 +179,22 @@ def draw_camera(frame):
     SCREEN.blit(pygame.transform.scale(frame_surface, (WIDTH, HEIGHT)), (0, 0))
 
 
+def load_high_score():
+    try:
+        with open("highscore.txt", "r") as f:
+            return int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def save_high_score(score):
+    with open("highscore.txt", "w") as f:
+        f.write(str(score))
+
+
+high_score = load_high_score()
+
+
 def menu():
     global pause_movement
     while game_stopped:
@@ -190,6 +208,12 @@ def menu():
         SCREEN.blit(start_img, (WIDTH // 2 - start_img.get_width() // 2,
                                 HEIGHT // 2 - start_img.get_height() // 2))
 
+        # Display high score on the menu screen
+        high_score_text = score_font.render(
+            f"High Score: {high_score}", True, (0, 0, 0))
+        SCREEN.blit(high_score_text, (WIDTH // 2 -
+                    high_score_text.get_width() // 2, HEIGHT // 2 + 100))
+
         # User input
         user_input = pygame.key.get_pressed()
         if user_input[pygame.K_SPACE]:
@@ -201,7 +225,7 @@ def menu():
 
 # Game loop
 def main():
-    global score, pause_movement
+    global score, pause_movement, high_score
 
     bird = Bird()
     base = Base()
@@ -258,6 +282,11 @@ def main():
                 game_over_rect = game_over_img.get_rect(
                     center=(WIDTH // 2, HEIGHT // 2))
                 SCREEN.blit(game_over_img, game_over_rect)
+
+                # Check if current score is a new high score
+                if score > high_score:
+                    high_score = score
+                    save_high_score(high_score)
 
         # Show score
         score_text = score_font.render(
