@@ -13,8 +13,10 @@ pygame.display.set_caption("FlappyArms")
 
 # Screen capture init
 cap = cv2.VideoCapture(0)
-cascade_path = os.path.join(os.path.dirname(
-    __file__), "haarcascade_frontalface_default.xml")
+cascade_path = "haarcascade_frontalface_default.xml"
+if not os.path.isfile(cascade_path):
+    print(f"Error: Cascade classifier not found at {cascade_path}")
+    exit()
 face_cascade = cv2.CascadeClassifier(cascade_path)
 if not cap.isOpened():
     print("Error: Could not open camera")
@@ -238,6 +240,9 @@ def main():
         quit_game()
 
         frame = capture_frame()
+        if frame is None:  # Handle case where frame is not captured
+            continue
+
         draw_camera(frame)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
