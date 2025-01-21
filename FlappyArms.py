@@ -45,6 +45,7 @@ game_over_img = pygame.image.load("assets/game_over.png")
 start_img = pygame.image.load("assets/start.png")
 
 icon_img = pygame.image.load("assets/icon.png")
+bg_img = pygame.image.load("assets/bg.png")
 pygame.display.set_icon(icon_img)
 
 
@@ -169,6 +170,19 @@ def capture_frame():
     if not ret:
         print("Error: Could not read frame")
         return None
+    
+    original_height, original_width = frame.shape[:2]
+    # print(original_height, original_width)
+
+    width_scale, height_scale = WIDTH / original_width, HEIGHT / original_height
+    scale = min(width_scale, height_scale) # Stays within screen
+
+    new_width = int(original_width * scale)
+    new_height = int(original_height * scale)
+
+    frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
+    # print(new_width, new_height)
 
     # Convert the frame from BGR (OpenCV) to RGB (Pygame)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -176,10 +190,10 @@ def capture_frame():
 
 
 def draw_camera(frame):
-    frame = cv2.flip(frame, 1) # Flip about y-axis to un-mirror video
+    # frame = cv2.flip(frame, 1) # Flip about y-axis to un-mirror video
     frame = np.rot90(frame)
     frame_surface = pygame.surfarray.make_surface(frame)
-    SCREEN.blit(pygame.transform.scale(frame_surface, (WIDTH, HEIGHT)), (0, 0))
+    SCREEN.blit(frame_surface, (0, 0))
 
 
 def load_high_score():
@@ -202,6 +216,8 @@ def menu():
     global pause_movement
     while game_stopped:
         quit_game()
+
+        SCREEN.blit(bg_img, (0, 0))
 
         frame = capture_frame()
         draw_camera(frame)
@@ -243,6 +259,8 @@ def main():
         frame = capture_frame()
         if frame is None:  # Handle case where frame is not captured
             continue
+
+        SCREEN.blit(bg_img, (0, 0))
 
         draw_camera(frame)
 
