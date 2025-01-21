@@ -176,6 +176,7 @@ def capture_frame():
 
 
 def draw_camera(frame):
+    frame = cv2.flip(frame, 1) # Flip about y-axis to un-mirror video
     frame = np.rot90(frame)
     frame_surface = pygame.surfarray.make_surface(frame)
     SCREEN.blit(pygame.transform.scale(frame_surface, (WIDTH, HEIGHT)), (0, 0))
