@@ -72,10 +72,11 @@ class Bird(pygame.sprite.Sprite):
         self.current_index = 1
         self.rect = self.rects[self.current_index]
         self.frame_count = 0
-        self.prev_center_y_pos = None
         self.alive = True
         self.fall_speed = 0
         self.rotation_angle = 0
+        self.smoothing_factor = 0.2
+        self.prev_center_y_pos_smoothed = HEIGHT // 2
 
     def update(self, face_pos):
         if self.alive:
@@ -88,33 +89,27 @@ class Bird(pygame.sprite.Sprite):
             if face_pos is not None and self.alive:
                 (x, y, w, h) = face_pos
                 # print(h)
-                center_y_pos = y + h // 2
-                if self.prev_center_y_pos is not None:
-                    delta = center_y_pos - self.prev_center_y_pos
-                    if abs(delta) > 15:
-                        center_y_pos = self.prev_center_y_pos + \
-                            (15 if delta > 0 else -15)
-
-                self.prev_center_y_pos = center_y_pos
-                self.rect.center = (100, center_y_pos)
+                raw_center_y_pos = y + h // 2
+                smoothed_center_y_pos = self.smoothing_factor * raw_center_y_pos + \
+                    (1 - self.smoothing_factor) * self.prev_center_y_pos_smoothed
+                self.prev_center_y_pos_smoothed = smoothed_center_y_pos
+                self.rect.center = (100, smoothed_center_y_pos)
 
                 # Warnings for face distance
-                if h > 110:
+                if h > 150:
                     warning_surface = font.render(
                         "Move farther", True, (0, 0, 0))
                     warning_rect = warning_surface.get_rect(
                         center=(WIDTH // 2, HEIGHT // 2))
+                    self.rect.center = (100, self.prev_center_y_pos_smoothed)
                     SCREEN.blit(warning_surface, warning_rect)
-                elif h < 80:
+                elif h < 60:
                     warning_surface = font.render(
                         "Move closer", True, (0, 0, 0))
                     warning_rect = warning_surface.get_rect(
                         center=(WIDTH // 2, HEIGHT // 2))
+                    self.rect.center = (100, self.prev_center_y_pos_smoothed)
                     SCREEN.blit(warning_surface, warning_rect)
-                SCREEN.blit(self.sprites[self.current_index], self.rect)
-
-            elif self.prev_center_y_pos is not None:
-                self.rect.center = (100, self.prev_center_y_pos)
                 SCREEN.blit(self.sprites[self.current_index], self.rect)
             else:
                 self.rect.center = (
@@ -281,6 +276,7 @@ def main():
         # Bird animation
         if len(faces) > 0:
             x, y, w, h = faces[0]
+            print(h)
             pygame.draw.rect(SCREEN, (0, 255, 0), (WIDTH - x - w, y, w, h), 2)
             bird.update((WIDTH - x - w, y, w, h))
         else:
