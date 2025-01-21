@@ -88,7 +88,7 @@ class Bird(pygame.sprite.Sprite):
             if face_pos is not None and self.alive:
                 (x, y, w, h) = face_pos
                 # print(h)
-                center_y_pos = y + 110
+                center_y_pos = y + h // 2
                 if self.prev_center_y_pos is not None:
                     delta = center_y_pos - self.prev_center_y_pos
                     if abs(delta) > 15:
@@ -280,7 +280,9 @@ def main():
 
         # Bird animation
         if len(faces) > 0:
-            bird.update(faces[0])
+            x, y, w, h = faces[0]
+            pygame.draw.rect(SCREEN, (0, 255, 0), (WIDTH - x - w, y, w, h), 2)
+            bird.update((WIDTH - x - w, y, w, h))
         else:
             bird.update(None)
 
